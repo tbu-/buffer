@@ -37,7 +37,7 @@ impl<'d, 's> BufferRef<'d, 's> {
         self.buffer
     }
     pub unsafe fn advance(&mut self, num_bytes: usize) {
-        assert!(*self.initialized_ + num_bytes < self.buffer.len());
+        assert!(*self.initialized_ + num_bytes <= self.buffer.len());
         *self.initialized_ += num_bytes;
     }
     pub fn extend<I>(&mut self, bytes: I) -> Result<(), CapacityError>
