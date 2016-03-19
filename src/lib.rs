@@ -1,5 +1,5 @@
-//! `buffer` provides safe, write-only and generics-free byte buffers, that can
-//! be used without zeroing them first.
+//! `buffer` provides safe, write-only and generics-free byte buffers that can
+//! be used without initializing them first.
 //!
 //! The main trait of this library is `Buffer` that represents a type that can
 //! contain uninitialized bytes (such as `Vec`, `ArrayVec`, etc.) and can
