@@ -18,20 +18,18 @@ impl<'r, 'd, 's> BufferRefBuffer<'r, 'd, 's> {
         }
     }
     fn buffer<'a>(&'a mut self) -> BufferRef<'d, 'a> {
-        let len = *self.buffer.initialized;
+        let len = *self.buffer.initialized_;
         let remaining = self.buffer.buffer.len() - len;
         unsafe {
-            BufferRef {
-                buffer: wildly_unsafe(&mut self.buffer.buffer[remaining..]),
-                initialized: &mut self.initialized,
-            }
+            BufferRef::new(wildly_unsafe(&mut self.buffer.buffer[remaining..]),
+                           &mut self.initialized)
         }
     }
 }
 
 impl<'r, 'd, 's> Drop for BufferRefBuffer<'r, 'd, 's> {
     fn drop(&mut self) {
-        *self.buffer.initialized += self.initialized;
+        *self.buffer.initialized_ += self.initialized;
     }
 }
 

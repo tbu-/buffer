@@ -1,10 +1,20 @@
+#[macro_use]
+extern crate mac;
+
 use std::slice;
 
 pub use impls::arrayvec::ArrayVecBuffer;
 pub use impls::buffer_ref::BufferRefBuffer;
 pub use impls::vec::VecBuffer;
+pub use traits::ReadBuffer;
+pub use traits::ReadBufferRef;
+pub use traits::read_buffer_ref;
 
 mod impls;
+mod traits;
+
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CapacityError;
 
 unsafe fn wildly_unsafe<'a, 'b>(slice: &'a mut [u8]) -> &'b mut [u8] {
     slice::from_raw_parts_mut(slice.as_mut_ptr(), slice.len())
@@ -12,23 +22,44 @@ unsafe fn wildly_unsafe<'a, 'b>(slice: &'a mut [u8]) -> &'b mut [u8] {
 
 pub struct BufferRef<'data, 'size> {
     buffer: &'data mut [u8],
-    initialized: &'size mut usize,
+    initialized_: &'size mut usize,
 }
 
-fn read<'data, 'size>(mut buf: BufferRef<'data, 'size>) -> Result<&'data [u8], ()> {
-    buf.buffer[0] = 0;
-    *buf.initialized = 1;
-    Ok(&buf.buffer[..*buf.initialized])
+impl<'d, 's> BufferRef<'d, 's> {
+    pub fn new(buffer: &'d mut [u8], initialized: &'s mut usize) -> BufferRef<'d, 's> {
+        debug_assert!(*initialized == 0);
+        BufferRef {
+            buffer: buffer,
+            initialized_: initialized,
+        }
+    }
+    pub unsafe fn uninitialized(&mut self) -> &mut [u8] {
+        self.buffer
+    }
+    pub unsafe fn advance(&mut self, num_bytes: usize) {
+        assert!(*self.initialized_ + num_bytes < self.buffer.len());
+        *self.initialized_ += num_bytes;
+    }
+    pub fn extend<I>(&mut self, bytes: I) -> Result<(), CapacityError>
+        where I: Iterator<Item=u8>
+    {
+        let mut buf_iter = (&mut self.buffer[*self.initialized_..]).into_iter();
+        for b in bytes {
+            *unwrap_or_return!(buf_iter.next(), Err(CapacityError)) = b;
+            *self.initialized_ += 1;
+        }
+        Ok(())
+    }
+    pub unsafe fn uninitialized_mut(&mut self) -> &mut [u8] {
+        &mut self.buffer[*self.initialized_..]
+    }
+    pub fn initialized(self) -> &'d [u8] {
+        &self.buffer[..*self.initialized_]
+    }
+    pub fn remaining(&self) -> usize {
+        self.buffer.len() - *self.initialized_
+    }
 }
-
-fn read_to_vec(vec: &mut Vec<u8>) -> Result<&[u8], ()> {
-    read2(vec)
-}
-
-fn read2<'a, T: Buffer<'a>>(buffer: T) -> Result<&'a [u8], ()> {
-    with_buffer(buffer, read)
-}
-
 
 pub fn with_buffer<'a, T: Buffer<'a>, F, R>(buffer: T, f: F) -> R
     where F: for<'b> FnOnce(BufferRef<'a, 'b>) -> R

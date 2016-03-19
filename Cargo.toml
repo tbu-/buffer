@@ -5,3 +5,4 @@ version = "0.1.0"
 
 [dependencies]
 arrayvec = "0.3.16"
+mac = "0.0.2"

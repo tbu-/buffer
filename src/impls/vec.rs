@@ -22,14 +22,11 @@ impl<'data> VecBuffer<'data> {
         let remaining = self.vec.capacity() - len;
         unsafe {
             let start = self.vec.as_mut_ptr().offset(len as isize);
-            BufferRef {
-                // This is unsafe, we now have two unique (mutable) references
-                // to the same `Vec`. However, we will only access
-                // `self.vec.len` through `self` and only the contents through
-                // the `BufferRef`.
-                buffer: slice::from_raw_parts_mut(start, remaining),
-                initialized: &mut self.initialized,
-            }
+            // This is unsafe, we now have two unique (mutable) references to
+            // the same `Vec`. However, we will only access `self.vec.len`
+            // through `self` and only the contents through the `BufferRef`.
+            BufferRef::new(slice::from_raw_parts_mut(start, remaining),
+                           &mut self.initialized)
         }
     }
 }

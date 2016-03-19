@@ -18,14 +18,10 @@ impl<'d> SliceBuffer<'d> {
     }
     fn buffer<'s>(&'s mut self) -> BufferRef<'d, 's> {
         unsafe {
-            BufferRef {
-                // This is unsafe, we now have two unique (mutable) references
-                // to the same `Vec`. However, we will only access
-                // `self.vec.len` through `self` and only the contents through
-                // the `BufferRef`.
-                buffer: wildly_unsafe(self.slice),
-                initialized: &mut self.initialized,
-            }
+            // This is unsafe, we now have two unique (mutable) references to
+            // the same `Vec`. However, we will only access `self.vec.len`
+            // through `self` and only the contents through the `BufferRef`.
+            BufferRef::new(wildly_unsafe(self.slice), &mut self.initialized)
         }
     }
 }
