@@ -1,7 +1,10 @@
 [package]
-authors = ["Tobias Bucher <tobiasbucher5991@gmail.com>"]
 name = "buffer"
 version = "0.1.0"
+authors = ["Tobias Bucher <tobiasbucher5991@gmail.com>"]
+license = "MIT/Apache-2.0"
+repository = "https://github.com/tbu-/buffer"
+description = "Safe, write-only, generics-free buffer abstraction"
 
 [dependencies]
 arrayvec = "0.3.16"
