@@ -1,0 +1,7 @@
+[package]
+authors = ["Tobias Bucher <tobiasbucher5991@gmail.com>"]
+name = "buffer"
+version = "0.1.0"
+
+[dependencies]
+arrayvec = "0.3.16"
