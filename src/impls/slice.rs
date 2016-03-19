@@ -4,6 +4,7 @@ use ToBufferRef;
 use std::mem;
 use wildly_unsafe;
 
+/// The intermediate step from a byte slice to a `BufferRef`.
 pub struct SliceBuffer<'data> {
     slice: &'data mut &'data mut [u8],
     initialized: usize,

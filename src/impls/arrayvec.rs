@@ -7,6 +7,7 @@ use self::arrayvec::Array;
 use self::arrayvec::ArrayVec;
 use std::slice;
 
+/// The intermediate step from a `ArrayVec` to a `BufferRef`.
 pub struct ArrayVecBuffer<'data, A: 'data+Array<Item=u8>> {
     // Will only touch the length of the `ArrayVec` through this reference,
     // except in `ArrayVecBuffer::buffer`.

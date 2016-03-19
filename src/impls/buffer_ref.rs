@@ -3,6 +3,7 @@ use BufferRef;
 use ToBufferRef;
 use wildly_unsafe;
 
+/// The intermediate step from a `BufferRef` to another `BufferRef`.
 pub struct BufferRefBuffer<'ref_, 'data: 'ref_, 'size: 'ref_> {
     // Will only touch the length of the `BufferRef` through this reference,
     // except in `BufferRefBuffer::buffer`.

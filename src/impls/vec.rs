@@ -3,6 +3,7 @@ use BufferRef;
 use ToBufferRef;
 use std::slice;
 
+/// The intermediate step from a `Vec` to a `BufferRef`.
 pub struct VecBuffer<'data> {
     // Will only touch the length of the `Vec` through this reference, except
     // in `VecBuffer::buffer`.
