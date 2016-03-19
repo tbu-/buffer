@@ -1,11 +1,7 @@
 use Buffer;
 use BufferRef;
 use ToBufferRef;
-use std::slice;
-
-unsafe fn wildly_unsafe<'a, 'b>(slice: &'a mut [u8]) -> &'b mut [u8] {
-    slice::from_raw_parts_mut(slice.as_mut_ptr(), slice.len())
-}
+use wildly_unsafe;
 
 pub struct BufferRefBuffer<'ref_, 'data: 'ref_, 'size: 'ref_> {
     // Will only touch the length of the `BufferRef` through this reference,

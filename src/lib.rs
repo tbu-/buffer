@@ -1,8 +1,14 @@
-mod impls;
+use std::slice;
 
 pub use impls::arrayvec::ArrayVecBuffer;
 pub use impls::buffer_ref::BufferRefBuffer;
 pub use impls::vec::VecBuffer;
+
+mod impls;
+
+unsafe fn wildly_unsafe<'a, 'b>(slice: &'a mut [u8]) -> &'b mut [u8] {
+    slice::from_raw_parts_mut(slice.as_mut_ptr(), slice.len())
+}
 
 pub struct BufferRef<'data, 'size> {
     buffer: &'data mut [u8],
