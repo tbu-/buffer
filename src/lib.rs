@@ -81,6 +81,13 @@ impl<'d, 's> BufferRef<'d, 's> {
         Ok(())
     }
 
+    /// Writes the byte slice into the buffer.
+    ///
+    /// If the slice contains more bytes than the buffer can contain, a
+    /// `CapacityError` is returned.
+    pub fn write(&mut self, bytes: &[u8]) -> Result<(), CapacityError> {
+        self.extend(bytes.iter().cloned())
+    }
 
     /// Returns the uninitialized part of the buffer.
     pub unsafe fn uninitialized_mut(&mut self) -> &mut [u8] {
