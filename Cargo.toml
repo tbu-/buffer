@@ -8,5 +8,5 @@ description = "Safe, write-only, generics-free buffer abstraction"
 readme = "README.md"
 
 [dependencies]
-arrayvec = "0.3.16"
+arrayvec = "0.3.7"
 mac = "0.0.2"
