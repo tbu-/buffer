@@ -21,6 +21,8 @@ use std::slice;
 
 pub use impls::arrayvec::ArrayVecBuffer;
 pub use impls::buffer_ref::BufferRefBuffer;
+pub use impls::slice::SliceBuffer;
+pub use impls::slice_ref::SliceRefBuffer;
 pub use impls::vec::VecBuffer;
 pub use traits::ReadBuffer;
 pub use traits::ReadBufferRef;

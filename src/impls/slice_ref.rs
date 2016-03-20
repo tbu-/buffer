@@ -1,17 +1,18 @@
 use Buffer;
 use BufferRef;
 use ToBufferRef;
+use std::mem;
 use wildly_unsafe;
 
-/// The intermediate step from a byte slice to a `BufferRef`.
-pub struct SliceBuffer<'data> {
-    slice: &'data mut [u8],
+/// The intermediate step from a byte slice reference to a `BufferRef`.
+pub struct SliceRefBuffer<'data> {
+    slice: &'data mut &'data mut [u8],
     initialized: usize,
 }
 
-impl<'d> SliceBuffer<'d> {
-    fn new(slice: &'d mut [u8]) -> SliceBuffer<'d> {
-        SliceBuffer {
+impl<'d> SliceRefBuffer<'d> {
+    fn new(slice: &'d mut &'d mut [u8]) -> SliceRefBuffer<'d> {
+        SliceRefBuffer {
             slice: slice,
             initialized: 0,
         }
@@ -26,14 +27,21 @@ impl<'d> SliceBuffer<'d> {
     }
 }
 
-impl<'d> Buffer<'d> for &'d mut [u8] {
-    type Intermediate = SliceBuffer<'d>;
-    fn to_to_buffer_ref(self) -> Self::Intermediate {
-        SliceBuffer::new(self)
+impl<'d> Drop for SliceRefBuffer<'d> {
+    fn drop(&mut self) {
+        let slice = mem::replace(self.slice, &mut []);
+        *self.slice = &mut slice[..self.initialized];
     }
 }
 
-impl<'d> ToBufferRef<'d> for SliceBuffer<'d> {
+impl<'d> Buffer<'d> for &'d mut &'d mut [u8] {
+    type Intermediate = SliceRefBuffer<'d>;
+    fn to_to_buffer_ref(self) -> Self::Intermediate {
+        SliceRefBuffer::new(self)
+    }
+}
+
+impl<'d> ToBufferRef<'d> for SliceRefBuffer<'d> {
     fn to_buffer_ref<'s>(&'s mut self) -> BufferRef<'d, 's> {
         self.buffer()
     }
