@@ -20,9 +20,8 @@ impl<'r, 'd, 's> BufferRefBuffer<'r, 'd, 's> {
     }
     fn buffer<'a>(&'a mut self) -> BufferRef<'d, 'a> {
         let len = *self.buffer.initialized_;
-        let remaining = self.buffer.buffer.len() - len;
         unsafe {
-            BufferRef::new(wildly_unsafe(&mut self.buffer.buffer[remaining..]),
+            BufferRef::new(wildly_unsafe(&mut self.buffer.buffer[len..]),
                            &mut self.initialized)
         }
     }
@@ -44,5 +43,32 @@ impl<'r, 'd, 's> Buffer<'d> for &'r mut BufferRef<'d, 's> {
 impl<'r, 'd, 's> ToBufferRef<'d> for BufferRefBuffer<'r, 'd, 's> {
     fn to_buffer_ref<'a>(&'a mut self) -> BufferRef<'d, 'a> {
         self.buffer()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use with_buffer;
+
+    #[test]
+    fn buffer_ref_remaining() {
+        let a: &mut [u8] = &mut [0; 32];
+        with_buffer(a, |mut b| {
+            with_buffer(&mut b, |mut c| {
+                assert!(c.remaining() == 32);
+                c.write(&[0]).unwrap();
+                assert!(c.remaining() == 31);
+                assert!(c.initialized() == &[0]);
+            });
+            assert!(b.remaining() == 31);
+            with_buffer(&mut b, |mut c| {
+                assert!(c.remaining() == 31);
+                c.write(&[1]).unwrap();
+                assert!(c.remaining() == 30);
+                assert!(c.initialized() == &[1]);
+            });
+            assert!(b.remaining() == 30);
+            assert!(b.initialized() == &[0, 1]);
+        })
     }
 }
