@@ -4,6 +4,7 @@ use std::fs;
 use std::io::Read;
 use std::io;
 use std::net;
+use std::process;
 use with_buffer;
 
 /// A utility function for unsafely implementing `ReadBufferRef` for readers
@@ -18,8 +19,11 @@ pub unsafe fn read_buffer_ref<'d, 's, T: Read>(reader: &mut T, mut buf: BufferRe
 
 /// An internal trait to be implemented by `T: Read` which do not access the
 /// read buffer in `Read::read`.
-///
-/// Can be implemented using the `read_buffer_ref` helper function.
+pub unsafe trait ReadBufferMarker: Read { }
+
+/// An internal trait to be implemented by `T: Read` which do not access the
+/// read buffer in `Read::read`. Prefer implementing `ReadBufferMarker` over
+/// this.
 pub trait ReadBufferRef: Read {
     /// Reads (equivalently to `Read::read`) into the buffer ref and returns
     /// the newly written bytes.
@@ -38,30 +42,30 @@ pub trait ReadBuffer: ReadBufferRef {
 }
 
 impl<T: ReadBufferRef> ReadBuffer for T { }
-
-macro_rules! unsafe_read_buffer_ref_impl {
-    ($($t:ty)*) => {
-        $(
-            impl ReadBufferRef for $t {
-                fn read_buffer_ref<'d, 's>(&mut self, buf: BufferRef<'d, 's>)
-                    -> io::Result<&'d [u8]>
-                {
-                    unsafe {
-                        read_buffer_ref(self, buf)
-                    }
-                }
-            }
-        )*
+impl<T: ReadBufferMarker> ReadBufferRef for T {
+    fn read_buffer_ref<'d, 's>(&mut self, buf: BufferRef<'d, 's>)
+        -> io::Result<&'d [u8]>
+    {
+        unsafe {
+            read_buffer_ref(self, buf)
+        }
     }
 }
 
-unsafe_read_buffer_ref_impl! {
-    fs::File
-    io::Empty
-    io::Repeat
-    io::Stdin
-    net::TcpStream
-}
+unsafe impl ReadBufferMarker for fs::File { }
+unsafe impl ReadBufferMarker for io::Empty { }
+unsafe impl ReadBufferMarker for io::Repeat { }
+unsafe impl ReadBufferMarker for io::Stdin { }
+unsafe impl ReadBufferMarker for net::TcpStream { }
+unsafe impl ReadBufferMarker for process::ChildStderr { }
+unsafe impl ReadBufferMarker for process::ChildStdout { }
+unsafe impl<'a> ReadBufferMarker for &'a [u8] { }
+unsafe impl<'a> ReadBufferMarker for &'a fs::File { }
+unsafe impl<'a> ReadBufferMarker for &'a net::TcpStream { }
+unsafe impl<'a> ReadBufferMarker for io::StdinLock<'a> { }
+unsafe impl<R> ReadBufferMarker for io::Take<R> where R: ReadBufferMarker { }
+unsafe impl<R> ReadBufferMarker for io::BufReader<R> where R: ReadBufferMarker { }
+unsafe impl<T, U> ReadBufferMarker for io::Chain<T, U> where T: ReadBufferMarker, U: ReadBufferMarker { }
 
-impl<'a> ReadBufferRef for &'a fs::File { fn read_buffer_ref<'d, 's>(&mut self, buf: BufferRef<'d, 's>) -> io::Result<&'d [u8]> { unsafe { read_buffer_ref(self, buf) } } }
-impl<'a> ReadBufferRef for &'a net::TcpStream { fn read_buffer_ref<'d, 's>(&mut self, buf: BufferRef<'d, 's>) -> io::Result<&'d [u8]> { unsafe { read_buffer_ref(self, buf) } } }
+unsafe impl<'a, R> ReadBufferMarker for &'a mut R where R: ReadBufferMarker { }
+unsafe impl<R> ReadBufferMarker for Box<R> where R: ReadBufferMarker { }
