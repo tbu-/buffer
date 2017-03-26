@@ -21,6 +21,8 @@ use std::slice;
 
 pub use impls::arrayvec::ArrayVecBuffer;
 pub use impls::buffer_ref::BufferRefBuffer;
+pub use impls::cap_at::CapAt;
+pub use impls::cap_at::CapAtBuffer;
 pub use impls::slice::SliceBuffer;
 pub use impls::slice_ref::SliceRefBuffer;
 pub use impls::vec::VecBuffer;
@@ -106,6 +108,14 @@ impl<'d, 's> BufferRef<'d, 's> {
     pub fn remaining(&self) -> usize {
         self.buffer.len() - *self.initialized_
     }
+
+    fn cap_at(self, index: usize) -> BufferRef<'d, 's> {
+        assert!(*self.initialized_ == 0);
+        BufferRef {
+            buffer: &mut self.buffer[..index],
+            initialized_: self.initialized_,
+        }
+    }
 }
 
 /// Convenience function that converts a `T: Buffer` into a `BufferRef`.
@@ -126,6 +136,12 @@ pub trait Buffer<'data> {
     type Intermediate: ToBufferRef<'data>;
     /// Converts the `T: Buffer` into the intermediate step to `BufferRef`.
     fn to_to_buffer_ref(self) -> Self::Intermediate;
+    /// Caps the buffer at the specified byte index.
+    ///
+    /// This means that no more than `len` bytes will be written to the buffer.
+    fn cap_at(self, len: usize) -> CapAt<'data, Self> where Self: Sized {
+        self.cap_at_impl(len)
+    }
 }
 
 /// Internal trait for the intermediate result of converting a `T: Buffer` into
@@ -133,4 +149,8 @@ pub trait Buffer<'data> {
 pub trait ToBufferRef<'data> {
     /// Second step to convert a `T: Buffer` to a `BufferRef`.
     fn to_buffer_ref<'size>(&'size mut self) -> BufferRef<'data, 'size>;
+}
+
+trait CapAtImpl<'data>: Buffer<'data> {
+    fn cap_at_impl(self, len: usize) -> CapAt<'data, Self> where Self: Sized;
 }
