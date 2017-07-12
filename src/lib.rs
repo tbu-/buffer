@@ -27,6 +27,7 @@ pub use impls::slice::SliceBuffer;
 pub use impls::slice_ref::SliceRefBuffer;
 pub use impls::vec::VecBuffer;
 pub use traits::ReadBuffer;
+pub use traits::ReadBufferMarker;
 pub use traits::ReadBufferRef;
 pub use traits::read_buffer_ref;
 
